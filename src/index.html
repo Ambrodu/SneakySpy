@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>SneakySpy</title>
+		<link rel="stylesheet" href="index.css">
+	</head>
+<body>
+	<div id="loading" class="container" style="justify-content: center;align-items: center;">
+		<img src="loading.gif" alt="Loading...">
+	</div>
+	<div id="main" class="container d-none">
+		<div>
+			<h1 class="text-center" style="font-size: 40px;">🕵️‍♂️</h1>
+			<h1 class="text-center" style="font-size: 20px;margin-top:-20px;">SneakySpy</h1>
+			<br><br>
+			<h4 class="text-center">Configure notifications:</h4>
+			<h6 class="text-center" style="margin-top:-20px;">Current: <span id="notification_status"></span></h6>
+			<div class="text-center" style="margin-top:-20px;">
+				<a onclick="setup_notifications()">Setup notifications</a>
+			</div>
+			<br><br>
+			<br><br>
+			<div id="start" class="btn btn-green" onclick="enable()">Enable</div>
+			<div id="stop" class="btn btn-red d-none" onclick="disable()">Disable</div>
+		</div>
+	</div>
+	<div id="warning" class="container d-none">
+		<div>
+			<h1 class="text-center" style="font-size: 40px;">⚠️</h1>
+			<h1 class="text-center" style="font-size: 20px;margin-top:-20px;">Sneaky Spy!</h1>
+			<br><br>
+			<h4 class="text-center">There was a sneaky spy on your computer...</h4>
+			<br><br>
+			<br><br>
+			<div class="btn btn-red" onclick='document.getElementById("warning").classList.add("d-none");document.getElementById("main").classList.remove("d-none");'>Return</div>
+		</div>
+	</div>
+	<div id="timer" class="container d-none" style="justify-content: center;align-items: center;">
+		<h1 style="font-size: 100px;">5</h1>
+	</div>
+	<div id="locked" class="container d-none">
+		<div>
+			<input type="password" id="pass" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
+			<br><br>
+			<div class="digit-div">
+				<div class="digit pad">1</div>
+				<div class="digit pad">2</div>
+				<div class="digit pad">3</div>
+			</div>
+			<div class="digit-div">
+				<div class="digit pad">4</div>
+				<div class="digit pad">5</div>
+				<div class="digit pad">6</div>
+			</div>
+			<div class="digit-div">
+				<div class="digit pad">7</div>
+				<div class="digit pad">8</div>
+				<div class="digit pad">9</div>
+			</div>
+			<div class="digit-div">
+				<div id="pad-btn" class="digit">🔒</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+	const {ipcRenderer} = require('electron');
+	const Store = require('electron-store');
+	const store = new Store();
+	const mouseEvents = require("global-mouse-events");
+	mouseEvents.on("mousemove", event => {
+		mouseEvents.pauseMouseEvents();
+		spydetected();
+	});
+	mouseEvents.pauseMouseEvents();
+
+	/* store.delete('webhook'); */
+	webhook = store.get('webhook');
+
+	if (webhook) {
+		document.getElementById('notification_status').innerHTML = 'ON';
+		document.getElementById("loading").classList.add("d-none");
+		document.getElementById("main").classList.remove("d-none");
+	}else {
+		document.getElementById('notification_status').innerHTML = 'OFF';
+		document.getElementById("loading").classList.add("d-none");
+		document.getElementById("main").classList.remove("d-none");
+	}
+
+	spy = true;
+
+	spy_timer = 15;
+	function spydetected(){
+		spy_timer--;
+		console.log(spy_timer);
+		if (spy == false){
+			spy_timer = 15;
+			return;
+		}
+		if (spy_timer == 0) {
+			document.getElementById("locked").classList.add("d-none");
+			document.getElementById("warning").classList.remove("d-none");
+			ipcRenderer.send('notif', {url: webhook});
+			require('child_process').exec(__dirname + '\\lock.bat');
+			spy_timer = 15;
+			return;
+		}
+		setTimeout(() => {
+			spydetected();
+		}, 1000);
+	}
+
+	function setup_notifications(){
+		Swal.fire({
+			title: 'Setup notifications',
+			input: 'text',
+			inputValue: webhook,
+			inputPlaceholder: 'Enter webhook url',
+			showCancelButton: true,
+			confirmButtonText: 'Submit',
+			showLoaderOnConfirm: true,
+			confirmButtonColor: '#3085d6',
+			confirmButtonText: 'Setup',
+			preConfirm: (webhook_url) => {
+				store.set('webhook', webhook_url);
+				webhook = store.get('webhook');
+				document.getElementById('notification_status').innerHTML = 'ON';
+				Swal.fire({
+					icon: 'success',
+					title: 'Notifications setup successfully',
+					showConfirmButton: false,
+					timer: 1500
+				});
+				ipcRenderer.send('setup', {url: webhook_url});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		})
+	}
+
+	function try_pass(){
+		let pass_try = document.getElementById("pass").value;
+		if (pass_try == store.get('pass')){
+			spy = false;
+			document.getElementById("locked").classList.add("d-none");
+			document.getElementById("main").classList.remove("d-none");
+		}
+		document.getElementById("pass").value = "";
+	}
+
+	function start_timer(){
+		let pass = document.getElementById("pass").value;
+		if (pass != ""){
+			store.set('pass', pass);
+			start();
+		}
+		document.getElementById("pass").value = "";
+	}
+
+	function enable(){
+		if (!webhook){
+			Swal.fire({
+				icon: 'error',
+				title: 'Notifications not setup',
+				text: 'Please setup notifications before enabling SneakySpy',
+				showConfirmButton: false,
+				timer: 1500
+			});
+			return;
+		}
+		spy = true;
+		document.getElementById("main").classList.add("d-none");
+		document.getElementById("locked").classList.remove("d-none");
+		document.getElementById("pad-btn").setAttribute('onclick','start_timer();');
+	}
+
+	function start(){
+		document.getElementById("timer").children[0].innerHTML = 5;
+		document.getElementById("locked").classList.add("d-none");
+		document.getElementById("timer").classList.remove("d-none");
+		setTimeout(() => {
+			document.getElementById("timer").children[0].innerHTML = 4;
+		}, 1000);
+		setTimeout(() => {
+			document.getElementById("timer").children[0].innerHTML = 3;
+		}, 2000);
+		setTimeout(() => {
+			document.getElementById("timer").children[0].innerHTML = 2;
+		}, 3000);
+		setTimeout(() => {
+			document.getElementById("timer").children[0].innerHTML = 1;
+		}, 4000);
+		setTimeout(() => {
+			document.getElementById("pad-btn").setAttribute('onclick','try_pass();');
+			document.getElementById("timer").classList.add("d-none");
+			document.getElementById("locked").classList.remove("d-none");
+			ipcRenderer.send('hide', {});
+			mouseEvents.resumeMouseEvents();
+		}, 5000);
+	}
+
+	document.querySelectorAll(".pad").forEach(pad => {
+		pad.addEventListener("click", () => {
+			let pass = document.getElementById("pass").value;
+			pass += pad.innerText;
+			document.getElementById("pass").value = pass;
+		});
+	});
+	
+</script>
+</html>
