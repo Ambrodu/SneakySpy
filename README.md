@@ -28,7 +28,7 @@ compile the source by installing the modules with ``npm install`` and then compi
 
 ## Demo
 
-![https://i.imgur.com/35pRuP9.gif](https://i.imgur.com/35pRuP9.gif)
+https://i.imgur.com/35pRuP9.gif
 
 ## Authors
 
