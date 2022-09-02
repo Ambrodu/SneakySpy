@@ -5,7 +5,7 @@ A program that allows you to set up a trap on your computer. If someone try to m
 
 Once running, if the software detects mouse movement, a 15 seconds timer will start. You will have 15 seconds to disable the software before it send the notification and lock the screen.
 
-To exit the software, double click on the tray icon. One clic will open the pass window. I might change this since that mean you only have to double clic on the tray icon to exit the software.
+To exit the software, double click on the tray icon (doesn't work if the app is running). One clic will open the pass window.
 
 **Only work on Windows!**
 
@@ -20,7 +20,7 @@ To exit the software, double click on the tray icon. One clic will open the pass
 
 Compiled using node v15.8.0
 
-Use the installer -> https://mega.nz/file/j8dGwZwY#gXpma8Mm11pbWrT_gCFG1oxkTurU0A-C3GnrajY_vRI
+Use the installer -> https://github.com/Ambrodu/SneakySpy/releases/
 
 or
 
@@ -28,7 +28,7 @@ compile the source by installing the modules with ``npm install`` and then compi
 
 ## Demo
 
-https://i.imgur.com/35pRuP9.gif
+https://i.imgur.com/OmJl9C6.gif
 
 ## Authors
 

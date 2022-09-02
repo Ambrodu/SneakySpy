@@ -89,3 +89,7 @@ input[type=password]:focus {
 	background-color: #ffffff;
 	border: 1px solid #ccc;
 }
+
+.digit:active{
+	background-color: #dcdcdc;
+}

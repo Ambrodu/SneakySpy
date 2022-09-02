@@ -41,7 +41,7 @@
 	</div>
 	<div id="locked" class="container d-none">
 		<div>
-			<input type="password" id="pass" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
+			<input type="password" id="pass" placeholder="Enter passcode" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
 			<br><br>
 			<div class="digit-div">
 				<div class="digit pad">1</div>
@@ -70,11 +70,13 @@
 	const Store = require('electron-store');
 	const store = new Store();
 	const mouseEvents = require("global-mouse-events");
+	enabled = false;
 	mouseEvents.on("mousemove", event => {
 		mouseEvents.pauseMouseEvents();
-		spydetected();
+		ipcRenderer.send('timer', {});
 	});
 	mouseEvents.pauseMouseEvents();
+
 
 	/* store.delete('webhook'); */
 	webhook = store.get('webhook');
@@ -89,28 +91,15 @@
 		document.getElementById("main").classList.remove("d-none");
 	}
 
-	spy = true;
-
-	spy_timer = 15;
-	function spydetected(){
-		spy_timer--;
-		console.log(spy_timer);
-		if (spy == false){
-			spy_timer = 15;
-			return;
-		}
-		if (spy_timer == 0) {
+	ipcRenderer.on('timer', (event, arg) => {
+		spy_timer = arg.time;
+		if (spy_timer == 0 && enabled) {
 			document.getElementById("locked").classList.add("d-none");
 			document.getElementById("warning").classList.remove("d-none");
 			ipcRenderer.send('notif', {url: webhook});
 			require('child_process').exec(__dirname + '\\lock.bat');
-			spy_timer = 15;
-			return;
 		}
-		setTimeout(() => {
-			spydetected();
-		}, 1000);
-	}
+	});
 
 	function setup_notifications(){
 		Swal.fire({
@@ -142,7 +131,7 @@
 	function try_pass(){
 		let pass_try = document.getElementById("pass").value;
 		if (pass_try == store.get('pass')){
-			spy = false;
+			ipcRenderer.send('stoptimer', {});
 			document.getElementById("locked").classList.add("d-none");
 			document.getElementById("main").classList.remove("d-none");
 		}
@@ -169,7 +158,7 @@
 			});
 			return;
 		}
-		spy = true;
+		enabled = true;
 		document.getElementById("main").classList.add("d-none");
 		document.getElementById("locked").classList.remove("d-none");
 		document.getElementById("pad-btn").setAttribute('onclick','start_timer();');
